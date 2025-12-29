@@ -11,14 +11,14 @@ for fname in os.listdir(INPUT_DIR):
     if not fname.lower().endswith((".jpg", ".png")):
         continue
     img_path = os.path.join(INPUT_DIR, fname)
-    print("PROCESS:", repr(fname))
-    print(" FULLPATH:", img_path)
-    print(" EXISTS:", os.path.exists(img_path))
+    #print("PROCESS:", repr(fname))
+    #print(" FULLPATH:", img_path)
+    #print(" EXISTS:", os.path.exists(img_path))
     try:
         size = os.path.getsize(img_path)
     except Exception as e:
         size = f"ERROR: {e}"
-    print(" SIZE(bytes):", size)
+    #print(" SIZE(bytes):", size)
 
     try:
         with open(img_path, 'rb') as f:
@@ -29,7 +29,7 @@ for fname in os.listdir(INPUT_DIR):
 
     arr = np.frombuffer(data, dtype=np.uint8)
     img = cv2.imdecode(arr, cv2.IMREAD_COLOR)
-    print(" imdecode ->", "ok" if img is not None else "None")
+    #print(" imdecode ->", "ok" if img is not None else "None")
     if img is None:
         print(" failed to open (skip):", img_path)
         continue
@@ -125,6 +125,12 @@ for fname in os.listdir(INPUT_DIR):
         continue
 
     parts = split_image(img)
+
+    # 切り出した枚数と各ピースのサイズを表示（縦, 横）
+    print(f"{fname}: found {len(parts)} pieces")
+    for idx, p in enumerate(parts, 1):
+        h, w = p.shape[:2]
+        print(f"  piece {idx}: height={h}, width={w}")
 
     for i, p in enumerate(parts, 1):
         #p = auto_adjust(p)
