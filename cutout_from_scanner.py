@@ -111,7 +111,7 @@ for fname in os.listdir(INPUT_DIR):
     parts = split_image(img)
 
     for i, p in enumerate(parts, 1):
-        p = auto_adjust(p)
+        #p = auto_adjust(p)
         out = f"{os.path.splitext(fname)[0]}_{i:02}.jpg"
 
         # ここを imwrite -> imencode + open に置き換え
