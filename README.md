@@ -64,4 +64,5 @@ process_file("scan001.jpg", input_dir="input", output_dir="output", do_adjust=Fa
 - 白閾値や最小白帯長はスキャン環境に合わせて調整してください。
 
 ## ライセンス
-適宜プロジェクトに合わせて追記してください（例:
+
+本プロジェクトは MIT ライセンスの下で提供されています。詳細はリポジトリの LICENSE ファイルを参照
