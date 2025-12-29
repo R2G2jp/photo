@@ -6,11 +6,13 @@ INPUT_DIR = "input"
 OUTPUT_DIR = "output"
 WHITE_TH = 240        # 白判定
 MIN_WHITE_RUN = 25    # 白帯の最小高さ(px)
-ASPECT = 749/515        # 横幅/縦長さ のアスペクト比 (width / height)
+ASPECT = 127/89        # 横幅/縦長さ のアスペクト比 (width / height)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # --- 実行用関数 ---
-def process_file(fname, input_dir=INPUT_DIR, output_dir=OUTPUT_DIR, do_adjust=False):
+def process_file(fname, input_dir=INPUT_DIR, output_dir=OUTPUT_DIR,
+                 do_adjust=False, white_th=WHITE_TH,
+                 min_white_run=MIN_WHITE_RUN, aspect=ASPECT):
     """1ファイル分を読み込み、分割して出力する."""
     img_path = os.path.join(input_dir, fname)
     try:
@@ -26,7 +28,8 @@ def process_file(fname, input_dir=INPUT_DIR, output_dir=OUTPUT_DIR, do_adjust=Fa
         print(f"failed to open: {img_path}")
         return
 
-    parts = split_image(img)
+    parts = split_image(img, white_th=white_th,
+                        min_white_run=min_white_run, aspect=aspect)
 
     # 切り出した枚数と各ピースのサイズを表示（縦, 横）
     print(f"{fname}: found {len(parts)} pieces")
@@ -50,13 +53,16 @@ def process_file(fname, input_dir=INPUT_DIR, output_dir=OUTPUT_DIR, do_adjust=Fa
         except Exception as e:
             print(f"write failed: {out_path}: {e}")
 
-def process_all(input_dir=INPUT_DIR, output_dir=OUTPUT_DIR, do_adjust=False):
+def process_all(input_dir=INPUT_DIR, output_dir=OUTPUT_DIR, do_adjust=False,
+                white_th=WHITE_TH, min_white_run=MIN_WHITE_RUN, aspect=ASPECT):
     """ディレクトリ内の画像をすべて処理する."""
     os.makedirs(output_dir, exist_ok=True)
     for fname in os.listdir(input_dir):
         if not fname.lower().endswith((".jpg", ".png")):
             continue
-        process_file(fname, input_dir=input_dir, output_dir=output_dir, do_adjust=do_adjust)
+        process_file(fname, input_dir=input_dir, output_dir=output_dir,
+                     do_adjust=do_adjust, white_th=white_th,
+                     min_white_run=min_white_run, aspect=aspect)
 
 if __name__ == "__main__":
     import argparse
@@ -85,7 +91,7 @@ def auto_adjust(img):
     s = cv2.multiply(s, 0.92)
     return cv2.cvtColor(cv2.merge([h, s, v]), cv2.COLOR_HSV2BGR)
 
-def split_image(img):
+def split_image(img, white_th=WHITE_TH, min_white_run=MIN_WHITE_RUN, aspect=ASPECT):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     h, w = gray.shape
 
@@ -93,13 +99,13 @@ def split_image(img):
     col_mean = gray.mean(axis=0)
     right = w
     for x in range(w - 1, 0, -1):
-        if col_mean[x] < WHITE_TH:
+        if col_mean[x] < white_th:
             right = x + 1
             break
     img = img[:, :right]
 
     # 切り出すべき縦高さをアスペクト比から決定
-    target_h = max(1, int(right / ASPECT))
+    target_h = max(1, int(right / aspect))
 
     # 縦方向の白帯検出
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -108,10 +114,10 @@ def split_image(img):
     cuts = [0]
     run = 0
     for y, val in enumerate(row_mean):
-        if val > WHITE_TH:
+        if val > white_th:
             run += 1
         else:
-            if run >= MIN_WHITE_RUN:
+            if run >= min_white_run:
                 cuts.append(y)
             run = 0
     cuts.append(img.shape[0])
@@ -128,12 +134,6 @@ def split_image(img):
         #　上から target_h を切り出す
         top = max(0, seg_top)
         bottom = top + target_h
-        #if bottom > img.shape[0]:
-        #    bottom = img.shape[0]
-        #    top = max(0, bottom - target_h)
-
-        # 最終フィルタ（実際の高さが十分か）
-        #if bottom - top >= 200:
         pieces.append(img[top:bottom])
 
     return pieces
