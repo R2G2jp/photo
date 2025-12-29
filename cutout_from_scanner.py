@@ -39,6 +39,7 @@ for fname in os.listdir(INPUT_DIR):
 
 WHITE_TH = 240        # 白判定
 MIN_WHITE_RUN = 25    # 白帯の最小高さ(px)
+ASPECT = 749/515        # 横幅/縦長さ のアスペクト比 (width / height)
 
 def auto_adjust(img):
     # コントラスト・明るさ
@@ -69,6 +70,9 @@ def split_image(img):
             break
     img = img[:, :right]
 
+    # 切り出すべき縦高さをアスペクト比から決定
+    target_h = max(1, int(right / ASPECT))
+
     # 縦方向の白帯検出
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     row_mean = gray.mean(axis=1)
@@ -84,13 +88,25 @@ def split_image(img):
             run = 0
     cuts.append(img.shape[0])
 
-    # 切り出し
+    # 切り出し：各セグメントに対して target_h に合わせて上寄せで切り出す
     pieces = []
     for i in range(len(cuts) - 1):
-        top = cuts[i]
-        bottom = cuts[i + 1]
-        if bottom - top > 200:  # 小さすぎる領域は除外
-            pieces.append(img[top:bottom])
+        seg_top = cuts[i]
+        seg_bottom = cuts[i + 1]
+        seg_h = seg_bottom - seg_top
+        if seg_h <= 0:
+            continue
+
+        #　上から target_h を切り出す
+        top = max(0, seg_top)
+        bottom = top + target_h
+        #if bottom > img.shape[0]:
+        #    bottom = img.shape[0]
+        #    top = max(0, bottom - target_h)
+
+        # 最終フィルタ（実際の高さが十分か）
+        #if bottom - top >= 200:
+        pieces.append(img[top:bottom])
 
     return pieces
 
