@@ -1,0 +1,15 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+input/
+output/
+# 空ディレクトリを残したい場合は .gitkeep を追跡する例外
+!input/.gitkeep
+!output/.gitkeep
